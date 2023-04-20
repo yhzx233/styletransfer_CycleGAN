@@ -14,6 +14,8 @@ def read_data_scenery(image_dir):
         rect = torchvision.transforms.RandomCrop.get_params(
             feature, (256, 256))
         feature = torchvision.transforms.functional.crop(feature, *rect)
+        # 转为[0, 1]的浮点数
+        feature = feature.float()/255
         images.append(feature)
     return images
 
