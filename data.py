@@ -3,30 +3,29 @@ import os
 import torchvision
 import matplotlib.pylab as plt
 
+from torch.utils.data import Dataset, DataLoader
 
-def read_data_scenery(image_dir):
-    files = os.listdir(image_dir)
-    images = []
-    resize = torchvision.transforms.Resize(512)
-    for file in files:
-        feature = resize(torchvision.io.read_image(
-            os.path.join(image_dir, file)))
-        rect = torchvision.transforms.RandomCrop.get_params(
-            feature, (256, 256))
-        feature = torchvision.transforms.functional.crop(feature, *rect)
-        # 转为[0, 1]的浮点数
-        feature = feature.float()/255
-        images.append(feature)
-    return images
-
-
-class SceneryDataset(torch.utils.data.Dataset):
+class SceneryDataset(Dataset):
     def __init__(self, image_dir):
-        self.features = read_data_scenery(image_dir)
+        self.features = []
+        for file in os.listdir(image_dir):
+            if file.endswith(".png"):
+                self.features.append(torchvision.io.read_image(os.path.join(image_dir, file)))
+
+        self.transform = torchvision.transforms.Compose([
+            torchvision.transforms.Resize(512),
+            torchvision.transforms.RandomCrop(256),
+            torchvision.transforms.RandomHorizontalFlip()
+        ])
+
+        # # gpu
+        # self.features = [feature.cuda() for feature in self.features]
+
         print("read "+str(len(self.features))+" images from "+image_dir)
 
     def __getitem__(self, idx):
-        return self.features[idx].float()
+        return self.transform(self.features[idx]) / 255
+
 
     def __len__(self):
         return len(self.features)
@@ -34,9 +33,9 @@ class SceneryDataset(torch.utils.data.Dataset):
 
 def load_data_scenery(batch_size):
     """返回两个图像集合的迭代器"""
-    A_iter = torch.utils.data.DataLoader(
+    A_iter = DataLoader(
         SceneryDataset("./train/trainA"), batch_size, shuffle=True)
-    B_iter = torch.utils.data.DataLoader(
+    B_iter = DataLoader(
         SceneryDataset("./train/trainB"), batch_size, shuffle=True)
     return A_iter, B_iter
 
@@ -54,5 +53,5 @@ if __name__ == "__main__":
     A_iter, B_iter = load_data_scenery(8)
     for item in B_iter:
         for i in range(item.shape[0]):
-            plt.imshow(rand_crop(item[i], 200, 200).permute(1, 2, 0).int())
+            plt.imshow(item[i].permute(1, 2, 0))
             plt.show()

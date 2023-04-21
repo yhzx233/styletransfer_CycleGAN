@@ -33,7 +33,7 @@ class GANLoss(nn.Module):
 
 def train(gen1 : nn.Module, gen2 : nn.Module, disc1 : nn.Module, disc2 : nn.Module, X_iter, Y_iter,
           num_epoch=114,
-          adv_weight=1, cycle_weight=10, identity_weight=10,
+          adv_weight=1, cycle_weight=5, identity_weight=5,
           learning_rate=0.0002, weight_decay=0,
           device=utils.try_gpu()):
     gen1 = gen1.to(device)
@@ -41,13 +41,13 @@ def train(gen1 : nn.Module, gen2 : nn.Module, disc1 : nn.Module, disc2 : nn.Modu
     disc1 = disc1.to(device)
     disc2 = disc2.to(device)
     gen1_optimizer = torch.optim.Adam(
-        gen1.parameters(), lr=learning_rate, weight_decay=weight_decay)
+        gen1.parameters(), lr=learning_rate, weight_decay=weight_decay, betas=(0.5, 0.999))
     gen2_optimizer = torch.optim.Adam(
-        gen2.parameters(), lr=learning_rate, weight_decay=weight_decay)
+        gen2.parameters(), lr=learning_rate, weight_decay=weight_decay, betas=(0.5, 0.999))
     disc1_optimizer = torch.optim.Adam(
-        disc1.parameters(), lr=learning_rate, weight_decay=weight_decay)
+        disc1.parameters(), lr=learning_rate, weight_decay=weight_decay, betas=(0.5, 0.999))
     disc2_optimizer = torch.optim.Adam(
-        disc2.parameters(), lr=learning_rate, weight_decay=weight_decay)
+        disc2.parameters(), lr=learning_rate, weight_decay=weight_decay, betas=(0.5, 0.999))
     
     gan_criteria = GANLoss().to(device)
     cycle_criteria = nn.L1Loss()
@@ -90,18 +90,17 @@ def train(gen1 : nn.Module, gen2 : nn.Module, disc1 : nn.Module, disc2 : nn.Modu
             #     print(f"epoch {epoch}, batch {i}, gan loss {gan_loss}, cycle loss {cycle_loss}, identity loss {idnetity_loss}")
             #     print(f"real gan loss {real_gan_loss}, fake gan loss {fake_gan_loss}")
         if epoch % 1 == 0:
-            # plt.imshow(X[0].detach().cpu().permute(1, 2, 0))
-            # plt.show()
-            # plt.imshow(gen1(X).detach().cpu()[0].permute(1, 2, 0))
-            # plt.show()
             # 显示在一个图里
             fig, axs = plt.subplots(2, 2)
             axs[0, 0].imshow(X[0].detach().cpu().permute(1, 2, 0))
             axs[0, 1].imshow(gen1(X).detach().cpu()[0].permute(1, 2, 0))
             axs[1, 0].imshow(Y[0].detach().cpu().permute(1, 2, 0))
             axs[1, 1].imshow(gen2(Y).detach().cpu()[0].permute(1, 2, 0))
-            plt.show()
-    torch.save(gen1.state_dict(), "gen1.params")
-    torch.save(gen2.state_dict(), "gen2.params")
-    torch.save(disc1.state_dict(), "disc1.params")
-    torch.save(disc2.state_dict(), "disc2.params")
+            # 保存为图片
+            fig.savefig(f"sample/epoch_{epoch}.png")
+
+        if (epoch+1) % 10 == 0:
+            torch.save(gen1.state_dict(), f"model/gen1_{epoch}.pth")
+            torch.save(gen2.state_dict(), f"model/gen2_{epoch}.pth")
+            torch.save(disc1.state_dict(), f"model/disc1_{epoch}.pth")
+            torch.save(disc2.state_dict(), f"model/disc2_{epoch}.pth")

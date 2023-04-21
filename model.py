@@ -24,17 +24,12 @@ class Discriminator(nn.Module):
         net.append(nn.BatchNorm2d(512))
         net.append(nn.LeakyReLU(0.2))
 
-        # net.append(nn.Conv2d(512, 1, 4, padding=1))
-
-        net.append(nn.AdaptiveAvgPool2d((1, 1)))
-        net.append(nn.Flatten())
-        net.append(nn.Linear(512, 2))
-        net.append(nn.Softmax(1))
+        net.append(nn.Conv2d(512, 1, 4, padding=1)) # output 1 channel prediction map
 
         self.net = nn.Sequential(*net)
 
     def forward(self, X):
-        return self.net(X)[:, 0]
+        return self.net(X)
 # 另一个比较怪的是Residual里面没怎么ReLu
 
 
