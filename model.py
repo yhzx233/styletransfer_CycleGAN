@@ -24,7 +24,11 @@ class Discriminator(nn.Module):
         net.append(nn.BatchNorm2d(512))
         net.append(nn.LeakyReLU(0.2))
 
-        net.append(nn.Conv2d(512, 1, 4, padding=1)) # output 1 channel prediction map
+        # net.append(nn.Conv2d(512, 1, 4, padding=1))
+
+        net.append(nn.AdaptiveAvgPool2d((1, 1)))
+        net.append(nn.Flatten())
+        net.append(nn.Linear(512, 2))
 
         self.net = nn.Sequential(*net)
 
